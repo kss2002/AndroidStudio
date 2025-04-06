@@ -26,10 +26,22 @@
         </activity>
 
         <!-- 로그인 화면 -->
-        <activity android:name=".LoginActivity" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true" />
 
         <!-- 메인 화면 -->
         <activity android:name=".MainActivity" />
+
+        <!-- 회원가입 -->
+        <activity
+            android:name=".SignUpActivity"
+            android:exported="false" />
+
+        <!-- 로그인 -->
+        <activity
+            android:name=".InputLogActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
