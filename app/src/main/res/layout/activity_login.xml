@@ -38,6 +38,7 @@
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="26dp"
         android:backgroundTint="#0064FF"
+
         android:padding="16dp"
         android:text="게스트로 시작"
         android:textColor="@color/white"
