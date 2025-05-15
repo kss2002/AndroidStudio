@@ -42,6 +42,7 @@
         <activity
             android:name=".InputLogActivity"
             android:exported="false" />
+        <activity android:name=".CategoryActivity" />
     </application>
 
 </manifest>
