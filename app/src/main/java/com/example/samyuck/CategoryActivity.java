@@ -11,6 +11,7 @@ import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -25,7 +26,7 @@ public class CategoryActivity extends AppCompatActivity{
     DatePicker datePicker;
     String selectedDate;
     String inputText;
-
+    private FirebaseAuth mAuth;
 
     public class ScheduleItem implements Serializable {
         public String date;
@@ -58,7 +59,7 @@ public class CategoryActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category);
-
+        mAuth = FirebaseAuth.getInstance();
         datePicker=findViewById(R.id.datePicker);
         ColorBtn = findViewById(R.id.ColorBtn);
         Category = findViewById(R.id.Category);
@@ -75,18 +76,22 @@ public class CategoryActivity extends AppCompatActivity{
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("색을 선택하세요")
                     .setItems(colors, (dialog, which) -> {
-                        int selectedColor = (which == 0) ? Color.RED :
+                        selectedColor = (which == 0) ? Color.RED :
                                 (which == 1) ? Color.GREEN :
                                         (which == 2) ? Color.BLUE :
                                                 (which == 3) ? Color.YELLOW :
-                                                        defaultColor; // 기본값 적용
-                        ColorBtn.setBackgroundColor(selectedColor);
+                                                        defaultColor;
+
+                        ColorBtn.setBackgroundColor(selectedColor); // 버튼 색상 변경
                     });
             builder.show();
         });
 
+
         // 완료 버튼 클릭 시 데이터 저장 후 MainActivity로 전달
         end.setOnClickListener(v -> {
+            String userId = mAuth.getCurrentUser().getUid();
+
             int day = datePicker.getDayOfMonth();
             int month = datePicker.getMonth() + 1;
             int year = datePicker.getYear();
@@ -94,18 +99,20 @@ public class CategoryActivity extends AppCompatActivity{
 
             inputText = Category.getText().toString();
 
+            // Firebase에 데이터 저장
             DatabaseReference database = FirebaseDatabase.getInstance().getReference();
             ScheduleItem scheduleItem = new ScheduleItem(selectedDate, inputText, selectedColor);
-            database.child("scheduleList").push().setValue(scheduleItem)
-                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 저장 성공!"))
+
+            database.child("users").child(userId).child("scheduleList").push()
+                    .setValue(scheduleItem)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("Firebase", "데이터 저장 성공!");
+                        Intent intent = new Intent(CategoryActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    })
                     .addOnFailureListener(e -> Log.e("Firebase", "데이터 저장 실패", e));
-
-            //scheduleList.add(new ScheduleItem(selectedDate, inputText, selectedColor));
-            Intent intent = new Intent(CategoryActivity.this, MainActivity.class);
-            intent.putExtra("scheduleList", scheduleList);
-            startActivity(intent);
         });
-
     };
 }
 

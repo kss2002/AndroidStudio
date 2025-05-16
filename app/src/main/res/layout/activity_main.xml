@@ -277,110 +277,26 @@
             </LinearLayout>
 
             <!-- Calendar Grid -->
+
+            <!-- Category Section -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/calendarGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
                 android:nestedScrollingEnabled="false"
-                app:layout_constraintTop_toBottomOf="@id/calendarHeader" />
+                android:padding="16dp"
+                app:layout_constraintTop_toBottomOf="@id/calendarHeader"
+                tools:layout_editor_absoluteX="0dp" />
 
-            <!-- Category Section -->
             <LinearLayout
                 android:id="@+id/categorySection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp"
-                android:layout_marginBottom="32dp"
+                app:layout_constraintTop_toBottomOf="@id/calendarGrid"
+                tools:layout_editor_absoluteX="0dp">
 
-                app:layout_constraintTop_toBottomOf="@id/calendarGrid">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:background="#F5F5F5"
-                    android:padding="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_lock" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="카테고리 1"
-                        android:textColor="#4CAF50" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_add" />
-                </LinearLayout>
-
-                <!-- Category 2 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:background="#F5F5F5"
-                    android:padding="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_lock" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="카테고리 2"
-                        android:textColor="#673AB7" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_add" />
-                </LinearLayout>
-
-                <!-- Category 3 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#F5F5F5"
-                    android:padding="12dp"
-                    android:layout_marginBottom="54dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_lock" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="카테고리 3"
-                        android:textColor="#4CAF50" />
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_add" />
-                </LinearLayout>
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
