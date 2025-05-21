@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home" android:title="홈" android:icon="@drawable/ic_home"/>
+    <item android:id="@+id/nav_search" android:title="친구찾기" android:icon="@drawable/ic_search"/>
+    <item android:id="@+id/nav_profile" android:title="프로필" android:icon="@drawable/ic_person"/>
+</menu>

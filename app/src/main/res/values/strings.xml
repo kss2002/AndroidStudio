@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">samyuck</string>
+    <string name="Create">생성</string>
+    <string name="End">완료</string>
+    <string name="strBtn3">삭제</string>
+    <string name="ColorBtn">색설정</string>
+    <string name="Category">카테고리</string>
+</resources>
