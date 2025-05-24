@@ -43,6 +43,7 @@
             android:name=".InputLogActivity"
             android:exported="false" />
         <activity android:name=".CategoryActivity" />
+        <activity android:name=".MenuActivity" />
     </application>
 
 </manifest>

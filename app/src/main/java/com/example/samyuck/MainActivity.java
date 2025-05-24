@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         // 추가 버튼 설정
         ImageButton addButton = findViewById(R.id.addButton);
         addButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, CategoryActivity.class);
+            Intent intent = new Intent(MainActivity.this, MenuActivity.class);
             startActivity(intent);
         });
 
