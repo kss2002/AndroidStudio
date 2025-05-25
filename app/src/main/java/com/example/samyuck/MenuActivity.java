@@ -23,7 +23,8 @@ public class MenuActivity extends AppCompatActivity {
 
         // 수정 버튼 클릭 시 (추후 구현)
         editButton.setOnClickListener(v -> {
-            // TODO: 수정 기능 구현
+            Intent intent = new Intent(MenuActivity.this, CategoryManageActivity.class);
+            startActivity(intent);
         });
 
         // 삭제 버튼 클릭 시 (추후 구현)
