@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CategoryUpdateActivity extends AppCompatActivity {
-    Button ColorUpdateBtn, UpdateEnd;
+    Button ColorUpdateBtn, UpdateEnd,delete;
     EditText CategoryUpdate;
     public int selectedColorUpdate = Color.BLACK; // 기본값 (검정색)
     DatePicker datePicker;
@@ -38,9 +38,9 @@ public class CategoryUpdateActivity extends AppCompatActivity {
         public String Category;
         public int color; // 색상 값 (예: #FF0000)
 
-        public ScheduleItem(String date, String text, int color) {
+        public ScheduleItem(String date, String Category, int color) {
             this.date = date;
-            this.Category = text;
+            this.Category = Category;
             this.color = color;
         }
 
@@ -69,6 +69,7 @@ public class CategoryUpdateActivity extends AppCompatActivity {
         ColorUpdateBtn = findViewById(R.id.ColorUpdateBtn);
         CategoryUpdate = findViewById(R.id.CategoryUpdate);
         UpdateEnd = findViewById(R.id.UpdateEnd);
+        delete = findViewById(R.id.Delete);
         scheduleItemKey=null;
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         String userId = mAuth.getCurrentUser().getUid();
@@ -134,12 +135,23 @@ public class CategoryUpdateActivity extends AppCompatActivity {
             updatedData.put("date",selectedDateUpdate ); // 변경할 필드
             updatedData.put("Category", inputTextUpdate); // 변경할 필드
             updatedData.put("color", selectedColorUpdate); // 변경할 필드
+            updatedData.put("text", inputTextUpdate); // 변경할 필드
 
 
             database.child("users").child(userId).child("scheduleList").child(scheduleItemKey)
                     .updateChildren(updatedData)
                     .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 수정 성공!"))
                     .addOnFailureListener(e -> Log.e("Firebase", "데이터 수정 실패", e));
+
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        });
+
+        delete.setOnClickListener(view -> {
+            database.child("users").child(userId).child("scheduleList").child(scheduleItemKey)
+                    .removeValue()
+                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 삭제 성공"))
+                    .addOnFailureListener(e -> Log.e("Firebase", "데이터 삭제 실패", e));
 
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);

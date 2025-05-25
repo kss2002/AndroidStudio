@@ -25,7 +25,7 @@ public class CategoryActivity extends AppCompatActivity{
     public int selectedColor= Color.BLACK; // 기본값 (검정색)
     DatePicker datePicker;
     String selectedDate;
-    String inputText;
+    String category;
     private FirebaseAuth mAuth;
 
     public class ScheduleItem implements Serializable {
@@ -33,9 +33,9 @@ public class CategoryActivity extends AppCompatActivity{
         public String Category;
         public int color; // 색상 값 (예: #FF0000)
 
-        public ScheduleItem(String date, String text, int color) {
+        public ScheduleItem(String date, String Category, int color) {
             this.date = date;
-            this.Category = text;
+            this.Category = Category;
             this.color = color;
         }
 
@@ -97,11 +97,11 @@ public class CategoryActivity extends AppCompatActivity{
             int year = datePicker.getYear();
             selectedDate = year + "-" + month + "-" + day;
 
-            inputText = Category.getText().toString();
+            category = Category.getText().toString();
 
             // Firebase에 데이터 저장
             DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-            ScheduleItem scheduleItem = new ScheduleItem(selectedDate, inputText, selectedColor);
+            ScheduleItem scheduleItem = new ScheduleItem(selectedDate, category, selectedColor);
 
             database.child("users").child(userId).child("scheduleList").push()
                     .setValue(scheduleItem)

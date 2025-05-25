@@ -13,17 +13,30 @@
         android:layout_height="match_parent"
         android:calendarViewShown="false"
         android:datePickerMode="spinner"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="-16dp" />
+        tools:layout_editor_absoluteX="-1dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <Button
         android:id="@+id/UpdateEnd"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="588dp"
-        android:text="@string/End"
+        android:text="@string/Update"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></Button>
+        app:layout_constraintEnd_toStartOf="@id/Delete"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.5"/>
+
+    <Button
+        android:id="@+id/Delete"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="588dp"
+        android:text="@string/Delete"
+        app:layout_constraintStart_toEndOf="@id/UpdateEnd"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.5"/>
 
     <Button
         android:id="@+id/ColorUpdateBtn"
