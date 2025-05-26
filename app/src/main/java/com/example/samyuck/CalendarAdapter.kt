@@ -12,6 +12,17 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>
     private var days: List<CalendarDay> = emptyList()
     private var selectedPosition = -1
 
+    // 날짜 클릭 리스너 인터페이스 정의
+    interface OnDateClickListener {
+        fun onDateClick(date: Date)
+    }
+
+    private var onDateClickListener: OnDateClickListener? = null
+
+    fun setOnDateClickListener(listener: OnDateClickListener) {
+        this.onDateClickListener = listener
+    }
+
     data class CalendarDay(
         val date: Date,
         val dayOfMonth: Int,
@@ -34,7 +45,6 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>
             text = day.dayOfMonth.toString()
             isSelected = position == selectedPosition
 
-            // Set text color based on the day of week
             val calendar = Calendar.getInstance().apply { time = day.date }
             val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
 
@@ -52,10 +62,13 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>
             selectedPosition = holder.adapterPosition
             notifyItemChanged(oldPosition)
             notifyItemChanged(selectedPosition)
+
+            // ✅ 콜백으로 날짜 전달
+            onDateClickListener?.onDateClick(day.date)
         }
     }
 
-    override fun getItemCount() = days.size
+    override fun getItemCount(): Int = days.size
 
     fun setCalendarDays(year: Int, month: Int) {
         val calendar = Calendar.getInstance()
@@ -63,44 +76,32 @@ class CalendarAdapter : RecyclerView.Adapter<CalendarAdapter.CalendarViewHolder>
 
         val days = mutableListOf<CalendarDay>()
 
-        // Add days from previous month
+        // 이전 달
         val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
         calendar.add(Calendar.DAY_OF_MONTH, -(firstDayOfWeek - 1))
         for (i in 0 until firstDayOfWeek - 1) {
-            days.add(CalendarDay(
-                calendar.time,
-                calendar.get(Calendar.DAY_OF_MONTH),
-                false
-            ))
+            days.add(CalendarDay(calendar.time, calendar.get(Calendar.DAY_OF_MONTH), false))
             calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
-        // Reset to first day of current month
+        // 현재 달
         calendar.set(year, month, 1)
-
-        // Add days of current month
         val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
         for (i in 1..daysInMonth) {
-            days.add(CalendarDay(
-                calendar.time,
-                i,
-                true
-            ))
+            days.add(CalendarDay(calendar.time, i, true))
             calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
-        // Add days from next month to complete the grid
-        val remainingDays = 42 - days.size // 6 rows * 7 days = 42
+        // 다음 달
+        val remainingDays = 42 - days.size
         for (i in 0 until remainingDays) {
-            days.add(CalendarDay(
-                calendar.time,
-                calendar.get(Calendar.DAY_OF_MONTH),
-                false
-            ))
+            days.add(CalendarDay(calendar.time, calendar.get(Calendar.DAY_OF_MONTH), false))
             calendar.add(Calendar.DAY_OF_MONTH, 1)
         }
 
         this.days = days
         notifyDataSetChanged()
     }
+
+    fun getDays(): List<CalendarDay> = days
 }

@@ -29,29 +29,18 @@ public class CategoryActivity extends AppCompatActivity{
     private FirebaseAuth mAuth;
 
     public class ScheduleItem implements Serializable {
-        public String date;
-        public String Category;
-        public int color; // 색상 값 (예: #FF0000)
+        public String category;
+        public int color;
 
-        public ScheduleItem(String date, String Category, int color) {
-            this.date = date;
-            this.Category = Category;
+        public ScheduleItem(String category, int color) {
+            this.category = category;
             this.color = color;
         }
 
-        // Getter & Setter
-        public String getDate() {
-            return date;
-        }
-
-        public String getText() {
-            return Category;
-        }
-
-        public int getColor() {
-            return color;
-        }
+        public String getCategory() { return category; }
+        public int getColor() { return color; }
     }
+
 
     ArrayList<ScheduleItem> scheduleList = new ArrayList<>();
 
@@ -60,14 +49,9 @@ public class CategoryActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category);
         mAuth = FirebaseAuth.getInstance();
-        datePicker=findViewById(R.id.datePicker);
         ColorBtn = findViewById(R.id.ColorBtn);
         Category = findViewById(R.id.Category);
         end = findViewById(R.id.end);
-
-        int selectedYear = datePicker.getYear();
-        int selectedMonth = datePicker.getMonth();
-        int selectedDay = datePicker.getDayOfMonth();
 
         String[] colors = {"빨강", "초록", "파랑", "노랑"};
         int defaultColor = Color.BLACK; // 기본값을 검은색으로 설정
@@ -92,18 +76,14 @@ public class CategoryActivity extends AppCompatActivity{
         end.setOnClickListener(v -> {
             String userId = mAuth.getCurrentUser().getUid();
 
-            int day = datePicker.getDayOfMonth();
-            int month = datePicker.getMonth() + 1;
-            int year = datePicker.getYear();
-            selectedDate = year + "-" + month + "-" + day;
 
             category = Category.getText().toString();
 
             // Firebase에 데이터 저장
             DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-            ScheduleItem scheduleItem = new ScheduleItem(selectedDate, category, selectedColor);
+            ScheduleItem scheduleItem = new ScheduleItem(category, selectedColor);
 
-            database.child("users").child(userId).child("scheduleList").push()
+            database.child("users").child(userId).child("categories").push()
                     .setValue(scheduleItem)
                     .addOnSuccessListener(aVoid -> {
                         Log.d("Firebase", "데이터 저장 성공!");

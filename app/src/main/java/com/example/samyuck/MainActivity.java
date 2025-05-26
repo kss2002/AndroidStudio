@@ -6,12 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,13 +15,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 
-import java.util.Calendar;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity {
     private LinearLayout categorySection;
@@ -34,20 +26,17 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
     private FirebaseAuth mAuth;
-    private TextView userNameText;
-    private TextView yearMonthText;  // 년월 표시를 위한 TextView
+    private TextView yearMonthText;
     private int currentYear;
     private int currentMonth;
+    private String selectedDate = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Firebase Auth 초기화
         mAuth = FirebaseAuth.getInstance();
-
-        // 로그인 상태 확인
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -55,37 +44,27 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // 현재 날짜 가져오기
         Calendar calendar = Calendar.getInstance();
         currentYear = calendar.get(Calendar.YEAR);
         currentMonth = calendar.get(Calendar.MONTH);
 
-        // 년월 텍스트뷰 초기화
         yearMonthText = findViewById(R.id.yearMonthText);
         updateYearMonthText();
 
-        // 캘린더 초기화
         setupCalendar();
 
-        // 카테고리 섹션 초기화
         categorySection = findViewById(R.id.categorySection);
         database = FirebaseDatabase.getInstance().getReference();
 
-        // Firebase에서 카테고리 데이터 불러오기
-        loadCategories();
-
-        // 추가 버튼 설정
         ImageButton addButton = findViewById(R.id.addButton);
         addButton.setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), CategoryManageActivity.class);
             startActivity(intent);
         });
 
-        // 월 선택 버튼 설정
         Button monthButton = findViewById(R.id.monthButton);
         monthButton.setOnClickListener(v -> showMonthPickerDialog());
 
-        // 이전/다음 월 버튼 설정
         ImageButton prevButton = findViewById(R.id.prevButton);
         ImageButton nextButton = findViewById(R.id.nextButton);
 
@@ -110,39 +89,41 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadCategories() {
+    private void loadCategoriesForDate(String date) {
         String userId = mAuth.getCurrentUser().getUid();
-        DatabaseReference userRef = database.child("users").child(userId).child("scheduleList");
+        DatabaseReference userRef = database.child("users").child(userId);
 
-        userRef.addValueEventListener(new ValueEventListener() {
+        userRef.child("categories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
+            public void onDataChange(@NonNull DataSnapshot categorySnapshot) {
                 categorySection.removeAllViews();
-                Log.d("Firebase", "데이터 스냅샷: " + snapshot.getValue());
+                for (DataSnapshot category : categorySnapshot.getChildren()) {
+                    String categoryName = category.child("category").getValue(String.class);
+                    if (categoryName == null) {
+                        categoryName = category.getKey(); // fallback
+                    }
+                    int color = category.child("color").getValue(Integer.class) != null ?
+                            category.child("color").getValue(Integer.class) : Color.BLACK;
 
-                for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
-                    try {
-                        // 필드명 대문자 "Category"로 수정
-                        String date = dataSnapshot.child("date").getValue(String.class);
-                        String category = dataSnapshot.child("Category").getValue(String.class);
-                        int color = 0;
-                        if (dataSnapshot.child("color").getValue() != null) {
-                            color = dataSnapshot.child("color").getValue(Integer.class);
+                    DatabaseReference detailRef = userRef.child("scheduleList").child(date).child(categoryName);
+                    String finalCategoryName = categoryName;
+                    detailRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot detailSnapshot) {
+                            String detail = detailSnapshot.child("detail").getValue(String.class);
+                            ScheduleItem item = new ScheduleItem(date, finalCategoryName, color, detail != null ? detail : "");
+                            addCategoryView(item);
                         }
 
-                        ScheduleItem item = new ScheduleItem(date, category, color);
-                        Log.d("Firebase", "카테고리 로드: " + category);
-                        addCategoryView(item);
-                    } catch (Exception e) {
-                        Log.e("Firebase", "데이터 변환 오류", e);
-                        e.printStackTrace();
-                    }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", "데이터 로드 실패", error.toException());
             }
         });
     }
@@ -171,67 +152,88 @@ public class MainActivity extends AppCompatActivity {
         calendarRecyclerView = findViewById(R.id.calendarGrid);
         calendarAdapter = new CalendarAdapter();
 
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 7);
-        calendarRecyclerView.setLayoutManager(layoutManager);
+        calendarRecyclerView.setLayoutManager(new GridLayoutManager(this, 7));
         calendarRecyclerView.setAdapter(calendarAdapter);
         calendarRecyclerView.setNestedScrollingEnabled(false);
 
-        updateCalendar();
+        calendarAdapter.setCalendarDays(currentYear, currentMonth);
+
+        calendarAdapter.setOnDateClickListener(new CalendarAdapter.OnDateClickListener() {
+            @Override
+            public void onDateClick(Date date) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                selectedDate = sdf.format(date);
+                loadCategoriesForDate(selectedDate);
+            }
+        });
     }
 
     private void addCategoryView(ScheduleItem item) {
-        // 카테고리 레이아웃 생성
         LinearLayout categoryLayout = new LinearLayout(this);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        layoutParams.setMargins(0, 0, 0, dpToPx(8));
-        categoryLayout.setLayoutParams(layoutParams);
         categoryLayout.setOrientation(LinearLayout.HORIZONTAL);
         categoryLayout.setGravity(Gravity.CENTER_VERTICAL);
-        categoryLayout.setBackgroundColor(Color.parseColor("#F5F5F5"));
         categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-
-        // Lock 아이콘
-        ImageView lockIcon = new ImageView(this);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
-        lockIcon.setLayoutParams(iconParams);
-        lockIcon.setImageResource(R.drawable.ic_lock);
-
-        // 카테고리 텍스트뷰
+        categoryLayout.setBackgroundResource(R.drawable.category_background);
         TextView categoryText = new TextView(this);
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-        );
-        textParams.setMarginStart(dpToPx(8));
-        categoryText.setLayoutParams(textParams);
         categoryText.setText(item.getCategory());
         categoryText.setTextSize(16);
         categoryText.setTextColor(item.getColor());
+        categoryText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        // Add 아이콘
         ImageView addIcon = new ImageView(this);
-        addIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
         addIcon.setImageResource(R.drawable.ic_add);
+        addIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
 
-        // 클릭 이벤트
+        TextView detailText = new TextView(this);
+        detailText.setText(item.getDetail());
+        detailText.setVisibility(item.getDetail().isEmpty() ? View.GONE : View.VISIBLE);
+
+        EditText inputField = new EditText(this);
+        inputField.setHint("세부 내용 입력");
+        inputField.setVisibility(View.GONE);
+
+        Button saveButton = new Button(this);
+        saveButton.setText("저장");
+        saveButton.setVisibility(View.GONE);
+
         addIcon.setOnClickListener(v -> {
-            String categoryName = item.getCategory();
-            if (categoryName != null && !categoryName.isEmpty()) {
-                Toast.makeText(MainActivity.this, categoryName + " 추가 버튼 클릭됨", Toast.LENGTH_SHORT).show();
+            inputField.setVisibility(View.VISIBLE);
+            saveButton.setVisibility(View.VISIBLE);
+        });
+
+        saveButton.setOnClickListener(v -> {
+            String detailInput = inputField.getText().toString().trim();
+            if (!detailInput.isEmpty()) {
+                String userId = mAuth.getCurrentUser().getUid();
+                DatabaseReference detailRef = database.child("users").child(userId)
+                        .child("scheduleList").child(item.getDate()).child(item.getCategory()).child("detail");
+
+                detailRef.setValue(detailInput).addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "저장됨: " + detailInput, Toast.LENGTH_SHORT).show();
+                    inputField.setText("");
+                    inputField.setVisibility(View.GONE);
+                    saveButton.setVisibility(View.GONE);
+                    detailText.setText(detailInput);
+                    detailText.setVisibility(View.VISIBLE);
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(this, "저장 실패: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+                loadCategoriesForDate(item.getDate()); // 저장 후 화면 다시 로딩
             }
         });
 
-        // 뷰들을 레이아웃에 추가
-        categoryLayout.addView(lockIcon);
         categoryLayout.addView(categoryText);
         categoryLayout.addView(addIcon);
 
-        // 카테고리 섹션에 추가
-        categorySection.addView(categoryLayout);
+        LinearLayout wrapperLayout = new LinearLayout(this);
+        wrapperLayout.setOrientation(LinearLayout.VERTICAL);
+        wrapperLayout.setPadding(0, 0, 0, dpToPx(8));
+        wrapperLayout.addView(categoryLayout);
+        wrapperLayout.addView(detailText);
+        wrapperLayout.addView(inputField);
+        wrapperLayout.addView(saveButton);
+
+        categorySection.addView(wrapperLayout);
     }
 
     private int dpToPx(int dp) {
