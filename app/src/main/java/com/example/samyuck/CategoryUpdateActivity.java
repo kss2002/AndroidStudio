@@ -69,7 +69,6 @@ public class CategoryUpdateActivity extends AppCompatActivity {
         ColorUpdateBtn = findViewById(R.id.ColorUpdateBtn);
         CategoryUpdate = findViewById(R.id.CategoryUpdate);
         UpdateEnd = findViewById(R.id.UpdateEnd);
-        delete = findViewById(R.id.Delete);
         scheduleItemKey=null;
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         String userId = mAuth.getCurrentUser().getUid();
@@ -142,16 +141,6 @@ public class CategoryUpdateActivity extends AppCompatActivity {
                     .updateChildren(updatedData)
                     .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 수정 성공!"))
                     .addOnFailureListener(e -> Log.e("Firebase", "데이터 수정 실패", e));
-
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        });
-
-        delete.setOnClickListener(view -> {
-            database.child("users").child(userId).child("scheduleList").child(scheduleItemKey)
-                    .removeValue()
-                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 삭제 성공"))
-                    .addOnFailureListener(e -> Log.e("Firebase", "데이터 삭제 실패", e));
 
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);

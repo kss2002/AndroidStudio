@@ -29,7 +29,8 @@ public class MenuActivity extends AppCompatActivity {
 
         // 삭제 버튼 클릭 시 (추후 구현)
         deleteButton.setOnClickListener(v -> {
-            // TODO: 삭제 기능 구현
+            Intent intent = new Intent(MenuActivity.this, CategoryManageActivity.class);
+            startActivity(intent);
         });
     }
 } 

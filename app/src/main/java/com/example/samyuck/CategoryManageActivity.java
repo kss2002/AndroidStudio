@@ -27,8 +27,9 @@ public class CategoryManageActivity extends AppCompatActivity {
     private LinearLayout categoryManageSection;
     private DatabaseReference database;
     String selectedCategory;
-
+    private String scheduleItemKey;
     private FirebaseAuth mAuth;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category_manage);
@@ -103,7 +104,6 @@ public class CategoryManageActivity extends AppCompatActivity {
         categoryLayout.setBackgroundColor(Color.parseColor("#F5F5F5"));
         categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
 
-
         // 카테고리 텍스트뷰
         TextView categoryText = new TextView(this);
         LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
@@ -117,13 +117,16 @@ public class CategoryManageActivity extends AppCompatActivity {
         categoryText.setTextSize(16);
         categoryText.setTextColor(item.getColor());
 
-        // 뷰들을 레이아웃에 추가
-        categoryLayout.addView(categoryText);
-
-        // 카테고리 섹션에 추가
-        categoryManageSection.addView(categoryLayout);
-
-        categoryText.setOnClickListener(view -> {
+        // 수정 아이콘
+        ImageView editIcon = new ImageView(this);
+        editIcon.setImageResource(R.drawable.edit); // res/drawable/ic_edit.png 또는 .xml 아이콘 필요
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                dpToPx(24),
+                dpToPx(24)
+        );
+        iconParams.setMarginEnd(dpToPx(12));
+        editIcon.setLayoutParams(iconParams);
+        editIcon.setOnClickListener(view -> {
             Intent intent = new Intent(CategoryManageActivity.this, CategoryUpdateActivity.class);
             intent.putExtra("selectedDate", item.getDate());
             intent.putExtra("selectedColor", item.getColor());
@@ -131,9 +134,46 @@ public class CategoryManageActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        // 삭제 아이콘
+        ImageView deleteIcon = new ImageView(this);
+        deleteIcon.setImageResource(R.drawable.delete); // res/drawable/ic_delete.png 또는 .xml 아이콘 필요
+        deleteIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
+// 삭제 아이콘 클릭 이벤트
+        deleteIcon.setOnClickListener(view -> {
+            String userId = mAuth.getCurrentUser().getUid();  // <- userId 정의 추가
+            database.child("users").child(userId).child("scheduleList")
+                    .orderByChild("Category").equalTo(item.getCategory()) // Category 필드로 삭제할 키 찾기
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                                dataSnapshot.getRef().removeValue()
+                                        .addOnSuccessListener(aVoid -> {
+                                            Log.d("Firebase", "데이터 삭제 성공");
+                                            Toast.makeText(CategoryManageActivity.this, "삭제 완료", Toast.LENGTH_SHORT).show();
+                                            loadCategories(); // 삭제 후 리스트 갱신
+                                        })
+                                        .addOnFailureListener(e -> Log.e("Firebase", "데이터 삭제 실패", e));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Firebase", "삭제 중 오류 발생", error.toException());
+                        }
+                    });
+        });
 
 
+        // 뷰들을 레이아웃에 추가
+        categoryLayout.addView(categoryText);
+        categoryLayout.addView(editIcon);
+        categoryLayout.addView(deleteIcon);
+
+        // 카테고리 섹션에 추가
+        categoryManageSection.addView(categoryLayout);
     }
+
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
