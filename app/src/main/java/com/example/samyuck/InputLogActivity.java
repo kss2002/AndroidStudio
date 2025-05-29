@@ -87,6 +87,8 @@ public class InputLogActivity extends AppCompatActivity {
                                 Toast.makeText(InputLogActivity.this, name + "님 환영합니다!", Toast.LENGTH_SHORT).show();
 
                                 Intent intent = new Intent(InputLogActivity.this, MainActivity.class);
+                                intent.putExtra("name",name);
+
                                 startActivity(intent);
                                 finish();
                             }

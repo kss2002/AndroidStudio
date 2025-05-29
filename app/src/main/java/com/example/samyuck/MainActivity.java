@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
     private FirebaseAuth mAuth;
-    private TextView yearMonthText;
+    private TextView yearMonthText,username;
     private int currentYear;
     private int currentMonth;
     private String selectedDate = "";
@@ -47,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+        username=findViewById(R.id.username);
+        String name = getIntent().getStringExtra("name");
+        username.setText(name);
 
         Calendar calendar = Calendar.getInstance();
         currentYear = calendar.get(Calendar.YEAR);
@@ -91,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
             }
             updateCalendar();
         });
+        loadCategoriesForDate(selectedDate);
 
         LinearLayout feedNav = findViewById(R.id.feedNav);
         LinearLayout exploreNav = findViewById(R.id.exploreNav);
@@ -173,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
         calendarAdapter.setCalendarDays(currentYear, currentMonth);
 
+
         calendarAdapter.setOnDateClickListener(new CalendarAdapter.OnDateClickListener() {
             @Override
             public void onDateClick(Date date) {
@@ -203,6 +208,12 @@ public class MainActivity extends AppCompatActivity {
         detailText.setText(item.getDetail());
         detailText.setVisibility(item.getDetail().isEmpty() ? View.GONE : View.VISIBLE);
 
+        CheckBox checkBox = new CheckBox(this);
+        checkBox.setText("동적 체크박스");
+        checkBox.setChecked(false); // 기본 체크 상태 설정
+        checkBox.setVisibility(View.GONE);
+
+
         EditText inputField = new EditText(this);
         inputField.setHint("세부 내용 입력");
         inputField.setVisibility(View.GONE);
@@ -228,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
                     inputField.setText("");
                     inputField.setVisibility(View.GONE);
                     saveButton.setVisibility(View.GONE);
+                    checkBox.setVisibility(View.VISIBLE);
                     detailText.setText(detailInput);
                     detailText.setVisibility(View.VISIBLE);
                 }).addOnFailureListener(e -> {
