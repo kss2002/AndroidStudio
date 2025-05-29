@@ -46,6 +46,7 @@
         <activity android:name=".MenuActivity" />
         <activity android:name=".CategoryManageActivity"/>
         <activity android:name=".CategoryUpdateActivity"/>
+        <activity android:name=".ExploreActivity" />
 
     </application>
 

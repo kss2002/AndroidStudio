@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -24,6 +25,7 @@ import com.google.firebase.database.ValueEventListener;
 
 public class CategoryManageActivity extends AppCompatActivity {
     private LinearLayout categoryManageSection;
+    private TextView emptyText;
     private DatabaseReference database;
     private FirebaseAuth mAuth;
 
@@ -42,6 +44,7 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
 
         categoryManageSection = findViewById(R.id.categoryManageSection);
+        emptyText = findViewById(R.id.emptyText);
         database = FirebaseDatabase.getInstance().getReference();
 
         loadCategories();
@@ -63,6 +66,7 @@ public class CategoryManageActivity extends AppCompatActivity {
                 categoryManageSection.removeAllViews();
                 Log.d("Firebase", "카테고리 스냅샷: " + snapshot.getValue());
 
+                int count = 0;
                 for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
                     try {
                         String categoryName = categorySnapshot.child("category").getValue(String.class);
@@ -75,12 +79,22 @@ public class CategoryManageActivity extends AppCompatActivity {
                             color = categorySnapshot.child("color").getValue(Integer.class);
                         }
 
-                        ScheduleItem item = new ScheduleItem(null, categoryName, color);
-                        addCategoryView(item);
+                        String visibility = "나만 보기";
+                        if (categorySnapshot.child("visibility").getValue() != null) {
+                            visibility = categorySnapshot.child("visibility").getValue(String.class);
+                        }
 
+                        ScheduleItem item = new ScheduleItem(null, categoryName, color, visibility);
+                        addCategoryView(item);
+                        count++;
                     } catch (Exception e) {
                         Log.e("Firebase", "카테고리 데이터 변환 오류", e);
                     }
+                }
+                if (count == 0) {
+                    emptyText.setVisibility(View.VISIBLE);
+                } else {
+                    emptyText.setVisibility(View.GONE);
                 }
             }
 
@@ -92,41 +106,59 @@ public class CategoryManageActivity extends AppCompatActivity {
     }
 
     private void addCategoryView(ScheduleItem item) {
-        // 카테고리 레이아웃 생성
-        LinearLayout categoryLayout = new LinearLayout(this);
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+        // 카드형 카테고리 레이아웃 생성
+        LinearLayout card = new LinearLayout(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        categoryManageSection.setPadding(0, dpToPx(80), 0, 0); // 부모 레이아웃 상단 패딩 추가
-        layoutParams.setMargins(0, 12, 0, dpToPx(8));
-        categoryLayout.setLayoutParams(layoutParams);
-        categoryLayout.setOrientation(LinearLayout.HORIZONTAL);
-        categoryLayout.setGravity(Gravity.CENTER_VERTICAL);
-        categoryLayout.setBackgroundColor(Color.parseColor("#F5F5F5"));
-        categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        cardParams.setMargins(0, dpToPx(8), 0, dpToPx(8));
+        card.setLayoutParams(cardParams);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setBackgroundResource(R.drawable.category_card);
+        card.setElevation(dpToPx(3));
 
-        // 카테고리 텍스트뷰
+        // 색상 원
+        View colorDot = new View(this);
+        LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
+        dotParams.setMarginEnd(dpToPx(16));
+        colorDot.setLayoutParams(dotParams);
+        if (item.getColor() == Color.RED) colorDot.setBackgroundResource(R.drawable.circle_red);
+        else if (item.getColor() == Color.GREEN) colorDot.setBackgroundResource(R.drawable.circle_green);
+        else if (item.getColor() == Color.BLUE) colorDot.setBackgroundResource(R.drawable.circle_blue);
+        else if (item.getColor() == Color.YELLOW) colorDot.setBackgroundResource(R.drawable.circle_yellow);
+        else colorDot.setBackgroundResource(R.drawable.circle_black);
+
+        // 텍스트(카테고리명 + 공개설정)
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+        textCol.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
         TextView categoryText = new TextView(this);
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-        );
-        textParams.setMarginStart(dpToPx(8));
-        categoryText.setLayoutParams(textParams);
         categoryText.setText(item.getCategory());
-        categoryText.setTextSize(16);
-        categoryText.setTextColor(item.getColor());
+        categoryText.setTextSize(18);
+        categoryText.setTextColor(Color.BLACK);
+        categoryText.setTypeface(null, android.graphics.Typeface.BOLD);
+
+        TextView visibilityText = new TextView(this);
+        visibilityText.setTextSize(13);
+        visibilityText.setTextColor(Color.parseColor("#888888"));
+        visibilityText.setText("공개설정: " + item.visibility);
+
+        textCol.addView(categoryText);
+        textCol.addView(visibilityText);
+
+        // 아이콘 영역
+        LinearLayout iconCol = new LinearLayout(this);
+        iconCol.setOrientation(LinearLayout.HORIZONTAL);
+        iconCol.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
 
         // 수정 아이콘
         ImageView editIcon = new ImageView(this);
         editIcon.setImageResource(R.drawable.edit);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
-                dpToPx(24),
-                dpToPx(24)
-        );
-        iconParams.setMarginEnd(dpToPx(12));
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(28), dpToPx(28));
+        iconParams.setMarginEnd(dpToPx(8));
         editIcon.setLayoutParams(iconParams);
         editIcon.setOnClickListener(view -> {
             Intent intent = new Intent(CategoryManageActivity.this, CategoryUpdateActivity.class);
@@ -138,12 +170,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         // 삭제 아이콘
         ImageView deleteIcon = new ImageView(this);
         deleteIcon.setImageResource(R.drawable.delete);
-        deleteIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
-
+        deleteIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(28), dpToPx(28)));
         deleteIcon.setOnClickListener(view -> {
             String userId = mAuth.getCurrentUser().getUid();
             database.child("users").child(userId).child("categories")
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                    .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             for (DataSnapshot child : snapshot.getChildren()) {
@@ -159,7 +190,7 @@ public class CategoryManageActivity extends AppCompatActivity {
                                                 Log.e("Firebase", "삭제 실패", e);
                                                 Toast.makeText(CategoryManageActivity.this, "삭제 실패", Toast.LENGTH_SHORT).show();
                                             });
-                                    break;  // 일치 항목 찾았으니 더 이상 반복 안 함
+                                    break;
                                 }
                             }
                         }
@@ -168,18 +199,39 @@ public class CategoryManageActivity extends AppCompatActivity {
                             Log.e("Firebase", "삭제 중 오류 발생", error.toException());
                         }
                     });
-
         });
 
-        categoryLayout.addView(categoryText);
-        categoryLayout.addView(editIcon);
-        categoryLayout.addView(deleteIcon);
+        iconCol.addView(editIcon);
+        iconCol.addView(deleteIcon);
 
-        categoryManageSection.addView(categoryLayout);
+        // 카드에 요소 추가
+        card.addView(colorDot);
+        card.addView(textCol);
+        card.addView(iconCol);
+
+        categoryManageSection.addView(card);
     }
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    public static class ScheduleItem {
+        private String date;
+        private String category;
+        private int color;
+        public String visibility;
+        public ScheduleItem(String date, String category, int color) {
+            this(date, category, color, "나만 보기");
+        }
+        public ScheduleItem(String date, String category, int color, String visibility) {
+            this.date = date;
+            this.category = category;
+            this.color = color;
+            this.visibility = visibility;
+        }
+        public String getCategory() { return category; }
+        public int getColor() { return color; }
     }
 }

@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="24dp"
-        android:backgroundTint="#0064FF"
+        android:backgroundTint="@color/black"
         android:onClick="onSignUpClick"
         android:padding="16dp"
         android:text="회원가입"

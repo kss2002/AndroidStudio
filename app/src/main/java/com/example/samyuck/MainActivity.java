@@ -20,6 +20,10 @@ import com.google.firebase.database.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import android.content.res.ColorStateList;
+import android.os.Build;
+import android.widget.CheckBox;
+
 public class MainActivity extends AppCompatActivity {
     private LinearLayout categorySection;
     private DatabaseReference database;
@@ -86,6 +90,17 @@ public class MainActivity extends AppCompatActivity {
                 currentMonth++;
             }
             updateCalendar();
+        });
+
+        LinearLayout feedNav = findViewById(R.id.feedNav);
+        LinearLayout exploreNav = findViewById(R.id.exploreNav);
+
+        feedNav.setOnClickListener(v -> {
+            // 현재 MainActivity이므로 아무 동작 없음(필요시 새로고침 등 가능)
+        });
+        exploreNav.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, ExploreActivity.class);
+            startActivity(intent);
         });
     }
 
