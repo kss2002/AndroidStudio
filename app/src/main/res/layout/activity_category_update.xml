@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/white"
-    tools:context=".CategoryUpdateActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
 
     <!-- 상단바 -->
     <LinearLayout
@@ -18,8 +18,7 @@
         android:paddingBottom="16dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toTopOf="parent">
+        android:gravity="center_vertical">
 
         <ImageButton
             android:id="@+id/backButton"
@@ -43,27 +42,19 @@
             android:id="@+id/UpdateEnd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="완료"
+            android:text="수정"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/black"
             android:paddingEnd="16dp" />
     </LinearLayout>
 
-    <!-- 구분선 -->
-    <View
-        android:id="@+id/divider"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#EEEEEE"
-        app:layout_constraintTop_toBottomOf="@id/topBar" />
-
     <!-- 카테고리명 입력 -->
     <EditText
         android:id="@+id/CategoryUpdate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="카테고리명"
+        android:hint="카테고리 입력"
         android:textSize="18sp"
         android:background="@android:color/transparent"
         android:padding="16dp"
@@ -77,8 +68,39 @@
         android:layout_height="1dp"
         android:background="#EEEEEE"
         app:layout_constraintTop_toBottomOf="@id/CategoryUpdate" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-    <!-- 색상 선택 버튼 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="공개설정"
+            android:textSize="16sp"
+            android:textColor="@color/black" />
+
+        <ImageView
+            android:id="@+id/visibilityIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="24dp"
+            android:src="@drawable/ic_lock"
+            android:contentDescription="공개설정 아이콘" />
+
+        <Spinner
+            android:id="@+id/visibilitySpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:entries="@array/visibility_options"
+            android:background="@android:color/transparent"
+            android:spinnerMode="dropdown" />
+    </LinearLayout>
+
+    <!-- 색상 선택 버튼
     <Button
         android:id="@+id/ColorUpdateBtn"
         android:layout_width="match_parent"
@@ -90,15 +112,44 @@
         android:padding="16dp"
         android:gravity="start|center_vertical"
         app:layout_constraintTop_toBottomOf="@id/CategoryUpdate" />
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-    <!-- DatePicker 주석 처리 -->
-    
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="색상"
+            android:textColor="@color/black"
+            android:textSize="16sp" />
+
+        <View
+            android:id="@+id/colorUpdateCircle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="24dp"
+            android:background="@drawable/circle_black"
+            android:contentDescription="색상 원" />
+
+        <ImageView
+            android:id="@+id/colorDropdown"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="색상 선택 드롭다운"
+            android:src="@drawable/ic_arrow_drop_down" />
+    </LinearLayout>
+    <!-- DatePicker 주석 처리
+
     <DatePicker
         android:id="@+id/datePicker"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:calendarViewShown="false"
         android:datePickerMode="spinner" />
-    
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    -->
+</LinearLayout>

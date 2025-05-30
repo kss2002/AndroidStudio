@@ -57,6 +57,7 @@ public class CategoryActivity extends AppCompatActivity{
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         visibilitySpinner.setAdapter(adapter);
 
+
         // Spinner 선택에 따라 아이콘 변경
         visibilitySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
