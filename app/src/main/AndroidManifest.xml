@@ -47,7 +47,7 @@
         <activity android:name=".CategoryManageActivity"/>
         <activity android:name=".CategoryUpdateActivity"/>
         <activity android:name=".ExploreActivity" />
-
+        <activity android:name=".FriendActivity" />
     </application>
 
 </manifest>

@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout feedNav = findViewById(R.id.feedNav);
         LinearLayout exploreNav = findViewById(R.id.exploreNav);
+        LinearLayout friendNav = findViewById(R.id.friendNav);
+
 
         feedNav.setOnClickListener(v -> {
             // 현재 MainActivity이므로 아무 동작 없음(필요시 새로고침 등 가능)
@@ -106,6 +108,22 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, ExploreActivity.class);
             startActivity(intent);
         });
+        friendNav.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, FriendActivity.class);
+            startActivity(intent);
+        });
+
+        //로그아웃 기능
+        Button logoutButton = findViewById(R.id.logoutButton);
+        logoutButton.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Toast.makeText(MainActivity.this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish(); // MainActivity 종료
+        });
+
     }
 
     private void loadCategoriesForDate(String date) {
