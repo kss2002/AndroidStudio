@@ -7,6 +7,8 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CategoryUpdateActivity extends AppCompatActivity {
-    Button ColorUpdateBtn, UpdateEnd,delete;
+    Button ColorUpdateBtn;
     EditText CategoryUpdate;
     public int selectedColorUpdate = Color.BLACK; // 기본값 (검정색)
     DatePicker datePicker;
@@ -32,6 +34,7 @@ public class CategoryUpdateActivity extends AppCompatActivity {
     String inputTextUpdate;
     private String scheduleItemKey;
     private FirebaseAuth mAuth;
+    private ImageButton backButton;
 
     public class ScheduleItem implements Serializable {
         public String date;
@@ -68,22 +71,28 @@ public class CategoryUpdateActivity extends AppCompatActivity {
         datePicker = findViewById(R.id.datePicker);
         ColorUpdateBtn = findViewById(R.id.ColorUpdateBtn);
         CategoryUpdate = findViewById(R.id.CategoryUpdate);
-        UpdateEnd = findViewById(R.id.UpdateEnd);
-        scheduleItemKey=null;
+        backButton = findViewById(R.id.backButton);
+        scheduleItemKey = null;
+        
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         String userId = mAuth.getCurrentUser().getUid();
-        int selectedColor = getIntent().getIntExtra("selectedColor",Color.BLACK);
+        int selectedColor = getIntent().getIntExtra("selectedColor", Color.BLACK);
         String selectedCategory = getIntent().getStringExtra("selectedCategory");
 
-        int selectedYear = datePicker.getYear();
-        int selectedMonth = datePicker.getMonth();
-        int selectedDay = datePicker.getDayOfMonth();
+        // DatePicker 초기화
+        datePicker.setVisibility(View.GONE); // DatePicker 숨기기
 
         String[] colors = {"빨강", "초록", "파랑", "노랑"};
-        int defaultColor = Color.BLACK; // 기본값을 검은색으로 설정
+        int defaultColor = Color.BLACK;
         ColorUpdateBtn.setBackgroundColor(selectedColor);
         CategoryUpdate.setHint(selectedCategory);
 
+        // 뒤로가기 버튼
+        backButton.setOnClickListener(v -> {
+            finish();
+        });
+
+        // 색상 선택 버튼
         ColorUpdateBtn.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("색을 선택하세요")
@@ -94,19 +103,19 @@ public class CategoryUpdateActivity extends AppCompatActivity {
                                                 (which == 3) ? Color.YELLOW :
                                                         defaultColor;
 
-                        ColorUpdateBtn.setBackgroundColor(selectedColorUpdate); // 버튼 색상 변경
+                        ColorUpdateBtn.setBackgroundColor(selectedColorUpdate);
                     });
             builder.show();
         });
 
-        database.child("users").child(userId).child("scheduleList")
-                .orderByChild("Category").equalTo(selectedCategory) // 특정 필드 기준으로 조회
-
+        // 카테고리 데이터 가져오기
+        database.child("users").child(userId).child("categories")
+                .orderByChild("category").equalTo(selectedCategory)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            scheduleItemKey = snapshot.getKey(); // 해당 항목의 키 가져오기
+                            scheduleItemKey = snapshot.getKey();
                             Log.d("Firebase", "찾은 키: " + scheduleItemKey);
                         }
                     }
@@ -117,33 +126,32 @@ public class CategoryUpdateActivity extends AppCompatActivity {
                     }
                 });
 
-
-        // 완료 버튼 클릭 시 데이터 저장 후 MainActivity로 전달
-        UpdateEnd.setOnClickListener(v -> {
-
-            int day = datePicker.getDayOfMonth();
-            int month = datePicker.getMonth() + 1;
-            int year = datePicker.getYear();
-            selectedDateUpdate = year + "-" + month + "-" + day;
-
+        // 완료 버튼 클릭 시 데이터 저장
+        findViewById(R.id.UpdateEnd).setOnClickListener(v -> {
             inputTextUpdate = CategoryUpdate.getText().toString();
-
-            // Firebase에 데이터 저장
+            if (inputTextUpdate.isEmpty()) {
+                CategoryUpdate.setError("카테고리명을 입력하세요");
+                return;
+            }
 
             Map<String, Object> updatedData = new HashMap<>();
-            updatedData.put("date",selectedDateUpdate ); // 변경할 필드
-            updatedData.put("Category", inputTextUpdate); // 변경할 필드
-            updatedData.put("color", selectedColorUpdate); // 변경할 필드
-            updatedData.put("text", inputTextUpdate); // 변경할 필드
+            updatedData.put("category", inputTextUpdate);
+            updatedData.put("color", selectedColorUpdate);
 
-
-            database.child("users").child(userId).child("scheduleList").child(scheduleItemKey)
-                    .updateChildren(updatedData)
-                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "데이터 수정 성공!"))
-                    .addOnFailureListener(e -> Log.e("Firebase", "데이터 수정 실패", e));
-
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
+            if (scheduleItemKey != null) {
+                database.child("users").child(userId).child("categories").child(scheduleItemKey)
+                        .updateChildren(updatedData)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Firebase", "카테고리 수정 성공!");
+                            Intent intent = new Intent(CategoryUpdateActivity.this, CategoryManageActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Firebase", "카테고리 수정 실패", e);
+                        });
+            }
         });
-    };
+    }
 }
