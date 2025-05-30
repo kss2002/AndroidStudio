@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView yearMonthText,username;
     private int currentYear;
     private int currentMonth;
+    private String name;
     private String selectedDate = "";
 
     @Override
@@ -47,9 +48,6 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-        username=findViewById(R.id.username);
-        String name = getIntent().getStringExtra("name");
-        username.setText(name);
 
         Calendar calendar = Calendar.getInstance();
         currentYear = calendar.get(Calendar.YEAR);
@@ -98,6 +96,24 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout feedNav = findViewById(R.id.feedNav);
         LinearLayout exploreNav = findViewById(R.id.exploreNav);
+
+        username=findViewById(R.id.username);
+        String userId = getIntent().getStringExtra("userId");
+        database.child("UserAccount").child(userId).child("name").get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        name = snapshot.getValue(String.class); // ✅ 실제 데이터 가져오기
+                        Log.d("Auth", "사용자 이름: " + name);
+                        username.setText(name); // ✅ UI 업데이트
+                    } else {
+                        Log.e("Auth", "사용자 이름 데이터가 없음!");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("Auth", "이름을 가져오는 데 실패", e));
+
+
+        Log.d("Auth", "사용자 이름: " + name);
+        username.setText(name);
 
         feedNav.setOnClickListener(v -> {
             // 현재 MainActivity이므로 아무 동작 없음(필요시 새로고침 등 가능)
