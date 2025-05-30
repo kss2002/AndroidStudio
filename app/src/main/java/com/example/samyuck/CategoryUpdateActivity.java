@@ -31,7 +31,7 @@ import java.util.Map;
 
 public class CategoryUpdateActivity extends AppCompatActivity {
     EditText CategoryUpdate;
-    public int selectedColorUpdate = Color.BLACK; // 기본값 (검정색)
+    public int selectedColorUpdate; // 기본값 (검정색)
     private View colorUpdateCircle;
     private ImageView colorDropdown;
     private Spinner visibilitySpinner;
@@ -89,7 +89,7 @@ public class CategoryUpdateActivity extends AppCompatActivity {
 
         CategoryUpdate.setText(selectedCategory);
         colorUpdateCircle.setBackgroundColor(selectedColorCircle);
-
+        selectedColorUpdate = selectedColorCircle;
 
 
         // 뒤로가기 버튼
