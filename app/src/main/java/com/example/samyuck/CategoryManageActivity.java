@@ -44,16 +44,22 @@ public class CategoryManageActivity extends AppCompatActivity {
             return;
         }
 
-        categoryManageSection = findViewById(R.id.categoryManageSection);
+        categoryManageSection = findViewById(R.id.categoryContainer);
         emptyText = findViewById(R.id.emptyText);
         database = FirebaseDatabase.getInstance().getReference();
 
         loadCategories();
 
-        ImageButton addButton = findViewById(R.id.addCategoryButton);
+        ImageButton addButton = findViewById(R.id.addButton);
         addButton.setOnClickListener(v -> {
             Intent intent = new Intent(this, CategoryActivity.class);
             startActivity(intent);
+        });
+
+        // 뒤로가기 버튼
+        ImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> {
+            finish();
         });
     }
 

@@ -27,6 +27,12 @@ public class ExploreActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance().getReference();
 
+        // 뒤로가기 버튼
+        ImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> {
+            finish();
+        });
+
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             String email = searchInput.getText().toString().trim();
             if (!email.isEmpty()) {

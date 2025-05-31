@@ -24,7 +24,7 @@ import android.content.res.ColorStateList;
 import android.os.Build;
 import android.widget.CheckBox;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private LinearLayout categorySection;
     private DatabaseReference database;
     private RecyclerView calendarRecyclerView;
@@ -36,9 +36,13 @@ public class MainActivity extends AppCompatActivity {
     private String selectedDate = "";
 
     @Override
+    protected int getLayoutId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();

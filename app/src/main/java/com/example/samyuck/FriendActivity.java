@@ -1,28 +1,36 @@
 package com.example.samyuck;
 
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
-public class FriendActivity extends AppCompatActivity {
+public class FriendActivity extends BaseActivity {
 
     private LinearLayout contentLayout;
     private Button tabFriends, tabRequests;
-
     private FirebaseAuth mAuth;
     private DatabaseReference database;
 
     @Override
+    protected int getLayoutId() {
+        return R.layout.activity_friend_list;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_friend_list);
+
+        // 뒤로가기 버튼
+        ImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> {
+            finish();
+        });
 
         tabFriends = findViewById(R.id.tabFriends);
         tabRequests = findViewById(R.id.tabRequests);
