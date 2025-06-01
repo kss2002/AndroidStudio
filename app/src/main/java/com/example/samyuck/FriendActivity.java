@@ -185,6 +185,7 @@ public class FriendActivity extends AppCompatActivity {
         nameText.setOnClickListener(v -> {
             Intent intent = new Intent(FriendActivity.this, MainActivity.class);
             intent.putExtra("targetUserId", userId);
+            intent.putExtra("targetName",name);
             startActivity(intent);
         });
 

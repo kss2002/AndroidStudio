@@ -44,15 +44,36 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-
+        String currentUserId = currentUser.getUid();
         targetUserId = getIntent().getStringExtra("targetUserId");
-        isOwnSchedule = (targetUserId == null || targetUserId.equals(currentUser.getUid()));
-        String userIdToUse = isOwnSchedule ? currentUser.getUid() : targetUserId;
-        if (targetUserId == null) targetUserId = currentUser.getUid();
+        isOwnSchedule = (targetUserId == null || targetUserId.equals(currentUserId));
+        String userIdToUse = isOwnSchedule ? currentUserId : targetUserId;
+        if (targetUserId == null) targetUserId = currentUserId;
 
         username = findViewById(R.id.username);
-        String name = getIntent().getStringExtra("name");
-        username.setText(name != null ? name : "내 피드");
+
+        // 이름 설정 로직
+        if (isOwnSchedule) {
+            // 내 피드인 경우, 현재 유저 이름 가져오기
+            database = FirebaseDatabase.getInstance().getReference();
+            database.child("UserAccount").child(currentUserId).child("name").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String myName = snapshot.getValue(String.class);
+                    username.setText(myName != null ? myName : "내 피드");
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    username.setText("내 피드");
+                }
+            });
+        } else {
+            // 타인 피드
+            String name = getIntent().getStringExtra("targetName");
+            username.setText(name != null ? name : "친구 피드");
+        }
+
 
         Calendar calendar = Calendar.getInstance();
         currentYear = calendar.get(Calendar.YEAR);
