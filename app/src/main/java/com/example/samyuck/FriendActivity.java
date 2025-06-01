@@ -1,9 +1,9 @@
 package com.example.samyuck;
 
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,6 +44,19 @@ public class FriendActivity extends AppCompatActivity {
         // 기본 탭은 친구 목록
         setActiveTab(tabFriends, tabRequests);
         loadFriendList();
+
+        LinearLayout exploreNav = findViewById(R.id.exploreNav);
+        LinearLayout feedNav = findViewById(R.id.feedNav);
+
+        feedNav.setOnClickListener(v -> {
+            Intent intent = new Intent(FriendActivity.this, MainActivity.class);
+            startActivity(intent);
+        });
+
+        exploreNav.setOnClickListener(v -> {
+            Intent intent = new Intent(FriendActivity.this, ExploreActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setActiveTab(Button active, Button inactive) {
@@ -53,6 +66,7 @@ public class FriendActivity extends AppCompatActivity {
         inactive.setTextColor(Color.BLACK);
     }
 
+    // 🔹 친구 목록 불러오기
     private void loadFriendList() {
         contentLayout.removeAllViews();
         String currentUserId = mAuth.getCurrentUser().getUid();
@@ -74,7 +88,7 @@ public class FriendActivity extends AppCompatActivity {
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             UserAccount friend = snapshot.getValue(UserAccount.class);
                             if (friend != null) {
-                                addUserItem(friend.getName(), null);
+                                addUserItem(friend.getName(), friendId, null); // 이름, ID 전달
                             }
                         }
                         @Override
@@ -90,6 +104,7 @@ public class FriendActivity extends AppCompatActivity {
         });
     }
 
+    // 🔹 친구 요청 목록 불러오기
     private void loadFriendRequests() {
         contentLayout.removeAllViews();
         String currentUserId = mAuth.getCurrentUser().getUid();
@@ -114,7 +129,7 @@ public class FriendActivity extends AppCompatActivity {
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                                         UserAccount sender = snapshot.getValue(UserAccount.class);
                                         if (sender != null) {
-                                            addUserItem(sender.getName(), () -> acceptRequest(requestSnapshot.getKey(), fromUserId));
+                                            addUserItem(sender.getName(), fromUserId, () -> acceptRequest(requestSnapshot.getKey(), fromUserId));
                                         }
                                     }
 
@@ -132,23 +147,21 @@ public class FriendActivity extends AppCompatActivity {
                 });
     }
 
+    // 🔹 친구 요청 수락
     private void acceptRequest(String requestId, String fromUserId) {
         String currentUserId = mAuth.getCurrentUser().getUid();
-
         DatabaseReference ref = database;
 
-        // 친구 관계 양방향 추가
         ref.child("friends").child(currentUserId).child(fromUserId).setValue(true);
         ref.child("friends").child(fromUserId).child(currentUserId).setValue(true);
-
-        // 요청 상태 변경
         ref.child("friend_requests").child(requestId).child("status").setValue("accepted");
 
         Toast.makeText(this, "친구 요청을 수락했습니다.", Toast.LENGTH_SHORT).show();
-        loadFriendRequests(); // 목록 새로고침
+        loadFriendRequests();
     }
 
-    private void addUserItem(String name, Runnable onAccept) {
+    // 🔹 친구/요청 항목 추가
+    private void addUserItem(String name, String userId, Runnable onAccept) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(8, 16, 8, 16);
@@ -156,11 +169,26 @@ public class FriendActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        ImageView profileImage = new ImageView(this);
+        profileImage.setImageResource(R.drawable.default_profile);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(100, 100);
+        imageParams.setMargins(0, 0, 32, 0);
+        profileImage.setLayoutParams(imageParams);
+
         TextView nameText = new TextView(this);
         nameText.setText(name);
         nameText.setTextSize(16);
-        nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        nameText.setLayoutParams(new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
+        // 🔹 이름 클릭 시 메인 액티비티로 이동 (상대 일정 보기)
+        nameText.setOnClickListener(v -> {
+            Intent intent = new Intent(FriendActivity.this, MainActivity.class);
+            intent.putExtra("targetUserId", userId);
+            startActivity(intent);
+        });
+
+        row.addView(profileImage);
         row.addView(nameText);
 
         if (onAccept != null) {

@@ -1,5 +1,6 @@
 package com.example.samyuck;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
@@ -35,6 +36,13 @@ public class ExploreActivity extends AppCompatActivity {
                 Toast.makeText(this, "이메일을 입력하세요.", Toast.LENGTH_SHORT).show();
             }
             return true;
+        });
+
+        LinearLayout feedNav = findViewById(R.id.feedNav);
+
+        feedNav.setOnClickListener(v -> {
+            Intent intent = new Intent(ExploreActivity.this, MainActivity.class);
+            startActivity(intent);
         });
     }
 

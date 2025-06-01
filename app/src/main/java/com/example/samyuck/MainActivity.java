@@ -3,7 +3,6 @@ package com.example.samyuck;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
@@ -20,20 +19,18 @@ import com.google.firebase.database.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import android.content.res.ColorStateList;
-import android.os.Build;
-import android.widget.CheckBox;
-
 public class MainActivity extends AppCompatActivity {
     private LinearLayout categorySection;
     private DatabaseReference database;
     private RecyclerView calendarRecyclerView;
     private CalendarAdapter calendarAdapter;
     private FirebaseAuth mAuth;
-    private TextView yearMonthText,username;
+    private TextView yearMonthText, username;
     private int currentYear;
     private int currentMonth;
     private String selectedDate = "";
+    private String targetUserId;
+    private boolean isOwnSchedule = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +44,15 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
-        username=findViewById(R.id.username);
+
+        targetUserId = getIntent().getStringExtra("targetUserId");
+        isOwnSchedule = (targetUserId == null || targetUserId.equals(currentUser.getUid()));
+        String userIdToUse = isOwnSchedule ? currentUser.getUid() : targetUserId;
+        if (targetUserId == null) targetUserId = currentUser.getUid();
+
+        username = findViewById(R.id.username);
         String name = getIntent().getStringExtra("name");
-        username.setText(name);
+        username.setText(name != null ? name : "내 피드");
 
         Calendar calendar = Calendar.getInstance();
         currentYear = calendar.get(Calendar.YEAR);
@@ -57,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
 
         yearMonthText = findViewById(R.id.yearMonthText);
         updateYearMonthText();
-
         setupCalendar();
 
         categorySection = findViewById(R.id.categorySection);
@@ -94,53 +96,52 @@ public class MainActivity extends AppCompatActivity {
             }
             updateCalendar();
         });
-        loadCategoriesForDate(selectedDate);
+
+        loadCategoriesForDate(selectedDate, userIdToUse);
 
         LinearLayout feedNav = findViewById(R.id.feedNav);
         LinearLayout exploreNav = findViewById(R.id.exploreNav);
         LinearLayout friendNav = findViewById(R.id.friendNav);
 
-
         feedNav.setOnClickListener(v -> {
-            // 현재 MainActivity이므로 아무 동작 없음(필요시 새로고침 등 가능)
+            // 내 피드일 때만 새로고침 동작 등 추가 가능
         });
+
         exploreNav.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ExploreActivity.class);
             startActivity(intent);
         });
+
         friendNav.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, FriendActivity.class);
             startActivity(intent);
         });
 
-        //로그아웃 기능
         Button logoutButton = findViewById(R.id.logoutButton);
-        logoutButton.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Toast.makeText(MainActivity.this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish(); // MainActivity 종료
-        });
-
+        if (!isOwnSchedule) {
+            logoutButton.setVisibility(View.GONE);
+        } else {
+            logoutButton.setOnClickListener(v -> {
+                FirebaseAuth.getInstance().signOut();
+                Toast.makeText(MainActivity.this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            });
+        }
     }
 
-    private void loadCategoriesForDate(String date) {
-        String userId = mAuth.getCurrentUser().getUid();
+    private void loadCategoriesForDate(String date, String userId) {
         DatabaseReference userRef = database.child("users").child(userId);
-
         userRef.child("categories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot categorySnapshot) {
                 categorySection.removeAllViews();
                 for (DataSnapshot category : categorySnapshot.getChildren()) {
                     String categoryName = category.child("category").getValue(String.class);
-                    if (categoryName == null) {
-                        categoryName = category.getKey(); // fallback
-                    }
-                    int color = category.child("color").getValue(Integer.class) != null ?
-                            category.child("color").getValue(Integer.class) : Color.BLACK;
+                    if (categoryName == null) categoryName = category.getKey();
+                    int color = category.child("color").getValue(Integer.class) != null ? category.child("color").getValue(Integer.class) : Color.BLACK;
 
                     DatabaseReference detailRef = userRef.child("scheduleList").child(date).child(categoryName);
                     String finalCategoryName = categoryName;
@@ -153,15 +154,13 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                        }
+                        public void onCancelled(@NonNull DatabaseError error) {}
                     });
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
@@ -176,8 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 .setItems(months, (dialog, which) -> {
                     currentMonth = which;
                     updateCalendar();
-                })
-                .show();
+                }).show();
     }
 
     private void updateCalendar() {
@@ -188,21 +186,14 @@ public class MainActivity extends AppCompatActivity {
     private void setupCalendar() {
         calendarRecyclerView = findViewById(R.id.calendarGrid);
         calendarAdapter = new CalendarAdapter();
-
         calendarRecyclerView.setLayoutManager(new GridLayoutManager(this, 7));
         calendarRecyclerView.setAdapter(calendarAdapter);
         calendarRecyclerView.setNestedScrollingEnabled(false);
-
         calendarAdapter.setCalendarDays(currentYear, currentMonth);
-
-
-        calendarAdapter.setOnDateClickListener(new CalendarAdapter.OnDateClickListener() {
-            @Override
-            public void onDateClick(Date date) {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-                selectedDate = sdf.format(date);
-                loadCategoriesForDate(selectedDate);
-            }
+        calendarAdapter.setOnDateClickListener(date -> {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            selectedDate = sdf.format(date);
+            loadCategoriesForDate(selectedDate, targetUserId);
         });
     }
 
@@ -212,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
         categoryLayout.setGravity(Gravity.CENTER_VERTICAL);
         categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
         categoryLayout.setBackgroundResource(R.drawable.category_background);
+
         TextView categoryText = new TextView(this);
         categoryText.setText(item.getCategory());
         categoryText.setTextSize(16);
@@ -221,16 +213,11 @@ public class MainActivity extends AppCompatActivity {
         ImageView addIcon = new ImageView(this);
         addIcon.setImageResource(R.drawable.ic_add);
         addIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
+        addIcon.setVisibility(isOwnSchedule ? View.VISIBLE : View.GONE);
 
         TextView detailText = new TextView(this);
         detailText.setText(item.getDetail());
         detailText.setVisibility(item.getDetail().isEmpty() ? View.GONE : View.VISIBLE);
-
-        CheckBox checkBox = new CheckBox(this);
-        checkBox.setText("동적 체크박스");
-        checkBox.setChecked(false); // 기본 체크 상태 설정
-        checkBox.setVisibility(View.GONE);
-
 
         EditText inputField = new EditText(this);
         inputField.setHint("세부 내용 입력");
@@ -248,8 +235,7 @@ public class MainActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> {
             String detailInput = inputField.getText().toString().trim();
             if (!detailInput.isEmpty()) {
-                String userId = mAuth.getCurrentUser().getUid();
-                DatabaseReference detailRef = database.child("users").child(userId)
+                DatabaseReference detailRef = database.child("users").child(targetUserId)
                         .child("scheduleList").child(item.getDate()).child(item.getCategory()).child("detail");
 
                 detailRef.setValue(detailInput).addOnSuccessListener(aVoid -> {
@@ -257,18 +243,17 @@ public class MainActivity extends AppCompatActivity {
                     inputField.setText("");
                     inputField.setVisibility(View.GONE);
                     saveButton.setVisibility(View.GONE);
-                    checkBox.setVisibility(View.VISIBLE);
                     detailText.setText(detailInput);
                     detailText.setVisibility(View.VISIBLE);
+                    loadCategoriesForDate(item.getDate(), targetUserId);
                 }).addOnFailureListener(e -> {
                     Toast.makeText(this, "저장 실패: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-                loadCategoriesForDate(item.getDate()); // 저장 후 화면 다시 로딩
             }
         });
 
         categoryLayout.addView(categoryText);
-        categoryLayout.addView(addIcon);
+        if (isOwnSchedule) categoryLayout.addView(addIcon);
 
         LinearLayout wrapperLayout = new LinearLayout(this);
         wrapperLayout.setOrientation(LinearLayout.VERTICAL);
