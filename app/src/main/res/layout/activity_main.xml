@@ -78,6 +78,17 @@
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         android:textSize="16sp" />
+                    <Button
+                        android:id="@+id/logoutButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="로그아웃"
+                        android:textSize="12sp"
+                        android:layout_marginStart="8dp"
+                        android:backgroundTint="@color/black"
+                        android:textColor="@android:color/white"
+                        android:padding="8dp" />
+
                 </LinearLayout>
 
             </LinearLayout>
@@ -328,6 +339,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/friendNav"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -342,7 +354,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="My"
+                android:text="친구"
                 android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>

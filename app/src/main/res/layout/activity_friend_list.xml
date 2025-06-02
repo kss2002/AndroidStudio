@@ -6,77 +6,81 @@
     android:orientation="vertical"
     android:background="@color/white">
 
+    <!-- 상단 타이틀 -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingVertical="16dp"
+        android:paddingHorizontal="16dp"
+        android:gravity="center_vertical">
 
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="친구"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="center" />
+    </LinearLayout>
 
+    <!-- 탭 선택 바 -->
+    <LinearLayout
+        android:id="@+id/tabBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#F8F8F8"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <Button
+            android:id="@+id/tabFriends"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="친구 목록"
+            android:backgroundTint="@color/purple_200"
+            android:textColor="@color/white" />
+
+        <Button
+            android:id="@+id/tabRequests"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="받은 요청"
+            android:backgroundTint="#DDDDDD"
+            android:textColor="@color/black" />
+    </LinearLayout>
+
+    <!-- 본문 콘텐츠 -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
         <LinearLayout
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- 검색창 -->
-            <LinearLayout
+            <!-- 여기에 친구 목록 또는 요청 목록을 동적으로 추가함 -->
+
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:layout_marginBottom="16dp"
-                android:layout_marginTop="4dp"
-                android:layout_gravity="center_vertical"
-                android:backgroundTint="#F5F5F5"
-                android:elevation="2dp"
-                android:clipToPadding="false"
-                android:clipChildren="false"
-                android:layout_marginLeft="0dp"
-                android:layout_marginRight="0dp"
-                android:background="@drawable/category_background">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_search"
-                    app:tint="#888888" />
-
-                <EditText
-                    android:id="@+id/exploreSearchInput"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:hint="계정 이메일 검색"
-                    android:textSize="16sp"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:inputType="text"
-                    android:singleLine="true"
-                    android:imeOptions="actionSearch" />
-            </LinearLayout>
-
-
-
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginVertical="24dp" />
-
-            <!-- 기존의 ScrollView 내부에 아래 LinearLayout을 추가 -->
-            <LinearLayout
-                android:id="@+id/searchResultsLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingTop="16dp">
-            </LinearLayout>
-
+                android:layout_height="1dp"
+                android:background="#EEEEEE"
+                android:layout_marginVertical="24dp" />
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
+    <!-- 기존 바텀 네비게이션 -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
@@ -126,6 +130,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/notificationsNav"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -145,6 +150,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/myNav"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
