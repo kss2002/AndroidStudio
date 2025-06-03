@@ -9,6 +9,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -158,7 +159,17 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 101 && resultCode == RESULT_OK && data != null) {
+            boolean updated = data.getBooleanExtra("updated", false);
+            boolean deleted = data.getBooleanExtra("deleted", false);
+            if (updated || deleted) {
+                loadCategoriesForDate(selectedDate, targetUserId); // 화면 갱신
+            }
+        }
+    }
     private void loadCategoriesForDate(String date, String userId) {
         DatabaseReference userRef = database.child("users").child(userId);
 
@@ -169,8 +180,15 @@ public class MainActivity extends AppCompatActivity {
 
                 List<String> categoryList = new ArrayList<>();
                 Map<String, Integer> categoryColors = new HashMap<>();
+                calendarAdapter.setOnDateClickListener(date -> {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                    String newSelectedDate = sdf.format(date);
+                    if (!newSelectedDate.equals(selectedDate)) {   // 날짜 변경 시에만 실행
+                        selectedDate = newSelectedDate;
+                        loadCategoriesForDate(selectedDate, targetUserId);
+                    }
+                });
 
-                // 🔹 카테고리 목록 가져오기
                 for (DataSnapshot category : categorySnapshot.getChildren()) {
                     String categoryName = category.child("category").getValue(String.class);
                     if (categoryName == null) categoryName = category.getKey();
@@ -180,26 +198,27 @@ public class MainActivity extends AppCompatActivity {
 
                     categoryList.add(categoryName);
                     categoryColors.put(categoryName, color);
-
-                    Log.d("FirebaseDebug", "Category: " + categoryName + ", Color: " + color);
                 }
 
-                // 🔹 각 카테고리에 대해 세부 내용 출력
                 for (String categoryName : categoryList) {
                     DatabaseReference detailRef = userRef.child("scheduleList").child(date).child(categoryName);
 
                     detailRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot detailSnapshot) {
-                            List<String> detailList = new ArrayList<>();
+                            List<Map<String, String>> detailList = new ArrayList<>();
 
                             for (DataSnapshot detail : detailSnapshot.getChildren()) {
+                                String detailId = detail.getKey();
                                 String detailName = detail.child("detail").getValue(String.class);
-                                if (detailName == null) detailName = detail.getKey();
-                                detailList.add(detailName);
+                                if (detailName == null) detailName = detailId;
+
+                                Map<String, String> detailMap = new HashMap<>();
+                                detailMap.put("id", detailId);
+                                detailMap.put("name", detailName);
+                                detailList.add(detailMap);
                             }
 
-                            // 🔹 UI 요소 생성 및 추가
                             ScheduleItem item = new ScheduleItem(date, categoryName, categoryColors.get(categoryName), "");
                             addCategoryView(item, detailList);
                         }
@@ -211,6 +230,7 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -253,21 +273,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void addCategoryView(ScheduleItem item, List<String> details) {
+    private void addCategoryView(ScheduleItem item, List<Map<String, String>> details) {
         LinearLayout categoryLayout = new LinearLayout(this);
         categoryLayout.setOrientation(LinearLayout.HORIZONTAL);
         categoryLayout.setGravity(Gravity.CENTER_VERTICAL);
         categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
         categoryLayout.setBackgroundResource(R.drawable.category_background);
 
-        // 🔹 카테고리 이름 표시
         TextView categoryText = new TextView(this);
         categoryText.setText(item.getCategory());
         categoryText.setTextSize(16);
         categoryText.setTextColor(item.getColor());
         categoryText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        // 🔹 추가 버튼
         ImageView addIcon = new ImageView(this);
         addIcon.setImageResource(R.drawable.ic_add);
         addIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
@@ -276,41 +294,49 @@ public class MainActivity extends AppCompatActivity {
         categoryLayout.addView(categoryText);
         if (isOwnSchedule) categoryLayout.addView(addIcon);
 
-        // 🔹 세부 내용 목록 출력 (체크박스 & 아이콘 추가)
         LinearLayout detailsLayout = new LinearLayout(this);
         detailsLayout.setOrientation(LinearLayout.VERTICAL);
         detailsLayout.setPadding(dpToPx(8), 0, 0, dpToPx(8));
 
-        for (String detail : details) {
+        for (Map<String, String> detailMap : details) {
+            String detailId = detailMap.get("id");
+            String detailName = detailMap.get("name");
+
             LinearLayout detailItemLayout = new LinearLayout(this);
             detailItemLayout.setOrientation(LinearLayout.HORIZONTAL);
             detailItemLayout.setGravity(Gravity.CENTER_VERTICAL);
             detailItemLayout.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
 
-            // 🔹 체크박스 추가
             CheckBox checkBox = new CheckBox(this);
             checkBox.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
-            checkBox.setButtonTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // 초록색 스타일 적용
+            checkBox.setButtonTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
 
-            // 🔹 세부 내용 표시
             TextView detailText = new TextView(this);
-            detailText.setText("- " + detail);
+            detailText.setText("- " + detailName);
             detailText.setTextSize(14);
             detailText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-            // 🔹 아이콘 추가 (오른쪽에 표시)
             ImageView detailIcon = new ImageView(this);
             detailIcon.setImageResource(R.drawable.ic_more);
             detailIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20)));
 
-            detailItemLayout.addView(checkBox); // 왼쪽 체크박스 추가
-            detailItemLayout.addView(detailText); // 세부 내용 추가
-            detailItemLayout.addView(detailIcon); // 오른쪽 아이콘 추가
-
+            detailItemLayout.addView(checkBox);
+            detailItemLayout.addView(detailText);
+            detailItemLayout.addView(detailIcon);
             detailsLayout.addView(detailItemLayout);
+
+            detailIcon.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, EditDetailActivity.class);
+                intent.putExtra("userId", targetUserId);
+                intent.putExtra("date", selectedDate);
+                intent.putExtra("category", item.getCategory());
+                intent.putExtra("detailId", detailId);
+                intent.putExtra("detail", detailName);
+                startActivityForResult(intent, 101);
+            });
+
         }
 
-        // 🔹 입력 필드 및 저장 버튼 (초기 숨김)
         EditText inputField = new EditText(this);
         inputField.setHint("세부 내용 입력");
         inputField.setVisibility(View.GONE);
@@ -330,9 +356,7 @@ public class MainActivity extends AppCompatActivity {
                 DatabaseReference detailRef = database.child("users").child(targetUserId)
                         .child("scheduleList").child(item.getDate()).child(item.getCategory()).push();
 
-                String newDetailId = detailRef.getKey();
                 DetailItem dItem = new DetailItem(detailInput);
-
                 detailRef.setValue(dItem).addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "저장됨: " + detailInput, Toast.LENGTH_SHORT).show();
                     inputField.setText("");
@@ -345,15 +369,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 🔹 UI 계층 구조 정리
         LinearLayout wrapperLayout = new LinearLayout(this);
         wrapperLayout.setOrientation(LinearLayout.VERTICAL);
         wrapperLayout.setPadding(0, 0, 0, dpToPx(8));
         wrapperLayout.addView(categoryLayout);
-        wrapperLayout.addView(detailsLayout); // 여러 개의 세부 내용 출력
+        wrapperLayout.addView(detailsLayout);
         wrapperLayout.addView(inputField);
         wrapperLayout.addView(saveButton);
-
         categorySection.addView(wrapperLayout);
     }
 

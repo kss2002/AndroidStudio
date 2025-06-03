@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:padding="16dp"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <EditText
+        android:id="@+id/editDetail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="세부내용 입력" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="수정 저장"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/btnDelete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="삭제"
+        android:backgroundTint="@color/black"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>
