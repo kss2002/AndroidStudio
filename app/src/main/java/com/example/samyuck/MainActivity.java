@@ -170,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
                 List<String> categoryList = new ArrayList<>();
                 Map<String, Integer> categoryColors = new HashMap<>();
 
-                // 🔹 카테고리 목록 가져오기
                 for (DataSnapshot category : categorySnapshot.getChildren()) {
                     String categoryName = category.child("category").getValue(String.class);
                     if (categoryName == null) categoryName = category.getKey();
@@ -180,11 +179,8 @@ public class MainActivity extends AppCompatActivity {
 
                     categoryList.add(categoryName);
                     categoryColors.put(categoryName, color);
-
-                    Log.d("FirebaseDebug", "Category: " + categoryName + ", Color: " + color);
                 }
 
-                // 🔹 각 카테고리에 대해 세부 내용 출력
                 for (String categoryName : categoryList) {
                     DatabaseReference detailRef = userRef.child("scheduleList").child(date).child(categoryName);
 
@@ -192,16 +188,23 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot detailSnapshot) {
                             List<String> detailList = new ArrayList<>();
+                            Map<String, Boolean> detailCheckedStates = new HashMap<>();
+                            Map<String, String> detailIds = new HashMap<>();
 
                             for (DataSnapshot detail : detailSnapshot.getChildren()) {
                                 String detailName = detail.child("detail").getValue(String.class);
                                 if (detailName == null) detailName = detail.getKey();
+
+                                boolean isChecked = detail.child("checked").getValue(Boolean.class) != null
+                                        && detail.child("checked").getValue(Boolean.class);
+
                                 detailList.add(detailName);
+                                detailIds.put(detailName, detail.getKey());
+                                detailCheckedStates.put(detailName, isChecked);
                             }
 
-                            // 🔹 UI 요소 생성 및 추가
                             ScheduleItem item = new ScheduleItem(date, categoryName, categoryColors.get(categoryName), "");
-                            addCategoryView(item, detailList);
+                            addCategoryView(item, detailList, detailIds, detailCheckedStates);
                         }
 
                         @Override
@@ -218,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void updateYearMonthText() {
         yearMonthText.setText(String.format("%d년 %d월", currentYear, currentMonth + 1));
@@ -253,21 +257,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void addCategoryView(ScheduleItem item, List<String> details) {
+    private void addCategoryView(ScheduleItem item, List<String> details, Map<String, String> detailIds, Map<String, Boolean> detailCheckedStates) {
         LinearLayout categoryLayout = new LinearLayout(this);
         categoryLayout.setOrientation(LinearLayout.HORIZONTAL);
         categoryLayout.setGravity(Gravity.CENTER_VERTICAL);
         categoryLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
         categoryLayout.setBackgroundResource(R.drawable.category_background);
 
-        // 🔹 카테고리 이름 표시
         TextView categoryText = new TextView(this);
         categoryText.setText(item.getCategory());
         categoryText.setTextSize(16);
         categoryText.setTextColor(item.getColor());
         categoryText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        // 🔹 추가 버튼
         ImageView addIcon = new ImageView(this);
         addIcon.setImageResource(R.drawable.ic_add);
         addIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24)));
@@ -276,41 +278,66 @@ public class MainActivity extends AppCompatActivity {
         categoryLayout.addView(categoryText);
         if (isOwnSchedule) categoryLayout.addView(addIcon);
 
-        // 🔹 세부 내용 목록 출력 (체크박스 & 아이콘 추가)
         LinearLayout detailsLayout = new LinearLayout(this);
         detailsLayout.setOrientation(LinearLayout.VERTICAL);
         detailsLayout.setPadding(dpToPx(8), 0, 0, dpToPx(8));
 
         for (String detail : details) {
+            String detailId = detailIds.get(detail);
+            boolean isChecked = detailCheckedStates.getOrDefault(detail, false);  // 🔹 초기 체크 상태 설정
+
             LinearLayout detailItemLayout = new LinearLayout(this);
             detailItemLayout.setOrientation(LinearLayout.HORIZONTAL);
             detailItemLayout.setGravity(Gravity.CENTER_VERTICAL);
             detailItemLayout.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
 
-            // 🔹 체크박스 추가
             CheckBox checkBox = new CheckBox(this);
+            checkBox.setChecked(isChecked);  // 🔹 기존 체크 상태 반영
             checkBox.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
             checkBox.setButtonTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50"))); // 초록색 스타일 적용
 
-            // 🔹 세부 내용 표시
             TextView detailText = new TextView(this);
             detailText.setText("- " + detail);
             detailText.setTextSize(14);
             detailText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-            // 🔹 아이콘 추가 (오른쪽에 표시)
-            ImageView detailIcon = new ImageView(this);
-            detailIcon.setImageResource(R.drawable.ic_more);
-            detailIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20)));
+            ImageView detailDeleteIcon = new ImageView(this);
+            detailDeleteIcon.setImageResource(R.drawable.delete);
+            detailDeleteIcon.setLayoutParams(new LinearLayout.LayoutParams(dpToPx(20), dpToPx(20)));
 
-            detailItemLayout.addView(checkBox); // 왼쪽 체크박스 추가
-            detailItemLayout.addView(detailText); // 세부 내용 추가
-            detailItemLayout.addView(detailIcon); // 오른쪽 아이콘 추가
+            detailDeleteIcon.setOnClickListener(view -> {
+                if (item.getDate() == null || item.getCategory() == null || detailId == null) {
+                    Toast.makeText(this, "삭제할 데이터가 올바르지 않습니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                DatabaseReference detailRef = database.child("users").child(targetUserId)
+                        .child("scheduleList").child(item.getDate()).child(item.getCategory()).child(detailId);
+
+                detailRef.removeValue().addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "삭제 완료", Toast.LENGTH_SHORT).show();
+                    loadCategoriesForDate(item.getDate(), targetUserId); // 화면 갱신
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(this, "삭제 실패: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            });
+
+            checkBox.setOnCheckedChangeListener((buttonView, isCheckedNew) -> {
+                if (detailId == null) return;
+                DatabaseReference detailRef = database.child("users").child(targetUserId)
+                        .child("scheduleList").child(item.getDate()).child(item.getCategory()).child(detailId);
+
+                detailRef.child("checked").setValue(isCheckedNew);
+            });
+
+            detailItemLayout.addView(checkBox);
+            detailItemLayout.addView(detailText);
+            detailItemLayout.addView(detailDeleteIcon);
 
             detailsLayout.addView(detailItemLayout);
         }
 
-        // 🔹 입력 필드 및 저장 버튼 (초기 숨김)
+    // 🔹 입력 필드 및 저장 버튼 (초기 숨김)
         EditText inputField = new EditText(this);
         inputField.setHint("세부 내용 입력");
         inputField.setVisibility(View.GONE);
@@ -331,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                         .child("scheduleList").child(item.getDate()).child(item.getCategory()).push();
 
                 String newDetailId = detailRef.getKey();
-                DetailItem dItem = new DetailItem(detailInput);
+                DetailItem dItem = new DetailItem(detailInput, false); // 🔹 기본값 false 설정
 
                 detailRef.setValue(dItem).addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "저장됨: " + detailInput, Toast.LENGTH_SHORT).show();
@@ -362,10 +389,16 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
     public static class DetailItem implements Serializable {
-
         public String detail;
-        public DetailItem(String detail) {
+        public boolean checked; // 🔹 체크 상태 추가
+
+        public DetailItem() {
+            // Firebase에서 데이터를 불러올 때 기본 생성자가 필요함
+        }
+
+        public DetailItem(String detail, boolean checked) {
             this.detail = detail;
+            this.checked = checked;
         }
     }
 }
