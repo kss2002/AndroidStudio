@@ -52,6 +52,19 @@ public class FriendActivity extends BaseActivity {
         // 기본 탭은 친구 목록
         setActiveTab(tabFriends, tabRequests);
         loadFriendList();
+        LinearLayout feedNav = findViewById(R.id.feedNav);
+        LinearLayout exploreNav = findViewById(R.id.exploreNav);
+
+        feedNav.setOnClickListener(v -> {
+            Intent intent = new Intent(FriendActivity.this, MainActivity.class);
+            startActivity(intent);
+        });
+        exploreNav.setOnClickListener(v -> {
+            Intent intent = new Intent(FriendActivity.this, ExploreActivity.class);
+            startActivity(intent);
+        });
+
+
     }
 
     private void setActiveTab(Button active, Button inactive) {
@@ -82,9 +95,11 @@ public class FriendActivity extends BaseActivity {
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             UserAccount friend = snapshot.getValue(UserAccount.class);
                             if (friend != null) {
-                                addUserItem(friend.getName(), null);
+                                // uid 넘김으로써 클릭 시 일정 이동 가능
+                                addUserItem(friend.getName(), friendId, null);
                             }
                         }
+
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {}
                     });
@@ -122,7 +137,7 @@ public class FriendActivity extends BaseActivity {
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                                         UserAccount sender = snapshot.getValue(UserAccount.class);
                                         if (sender != null) {
-                                            addUserItem(sender.getName(), () -> acceptRequest(requestSnapshot.getKey(), fromUserId));
+                                            addUserItem(sender.getName(), null, () -> acceptRequest(requestSnapshot.getKey(), fromUserId));
                                         }
                                     }
 
@@ -156,7 +171,7 @@ public class FriendActivity extends BaseActivity {
         loadFriendRequests(); // 목록 새로고침
     }
 
-    private void addUserItem(String name, Runnable onAccept) {
+    private void addUserItem(String name, String uid, Runnable onAccept) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(8, 16, 8, 16);
@@ -164,12 +179,29 @@ public class FriendActivity extends BaseActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        ImageView profileImage = new ImageView(this);
+        profileImage.setImageResource(R.drawable.default_profile);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(100, 100);
+        imageParams.setMargins(0, 0, 32, 0);
+        profileImage.setLayoutParams(imageParams);
+
         TextView nameText = new TextView(this);
         nameText.setText(name);
         nameText.setTextSize(16);
         nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-        row.addView(nameText);
+        // 이름 클릭 시 친구 일정 보기
+        if (uid != null) {
+            nameText.setOnClickListener(v -> {
+                Intent intent = new Intent(FriendActivity.this, MainActivity.class);
+                intent.putExtra("targetUserId", uid);
+                intent.putExtra("targetName", name);
+                startActivity(intent);
+            });
+        }
+
+        row.addView(profileImage);  // 이미지 먼저
+        row.addView(nameText);      // 이름 다음
 
         if (onAccept != null) {
             Button acceptBtn = new Button(this);
@@ -180,6 +212,7 @@ public class FriendActivity extends BaseActivity {
 
         contentLayout.addView(row);
     }
+
 
     private void addText(String message) {
         TextView text = new TextView(this);

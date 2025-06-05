@@ -170,7 +170,11 @@ public class CategoryManageActivity extends AppCompatActivity {
         editIcon.setOnClickListener(view -> {
             Intent intent = new Intent(CategoryManageActivity.this, CategoryUpdateActivity.class);
             intent.putExtra("selectedCategory", item.getCategory());
-            intent.putExtra("selectedColor", item.getColor());
+            Log.d("putIntent","전송된 카테고리"+item.getCategory());
+            intent.putExtra("selectedColor", String.format("#%06X", (0xFFFFFF & item.getColor())));
+            Log.d("putIntent","전송된 색상"+String.format("#%06X", (0xFFFFFF & item.getColor())));
+            intent.putExtra("selectedVisibility", item.getVisibility());
+            Log.d("putIntent","전송된 공개설정"+item.getVisibility());
             startActivity(intent);
         });
 
@@ -240,5 +244,6 @@ public class CategoryManageActivity extends AppCompatActivity {
         }
         public String getCategory() { return category; }
         public int getColor() { return color; }
+        public String getVisibility() { return visibility; }
     }
 }
