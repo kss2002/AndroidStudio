@@ -214,4 +214,5 @@ public class FriendActivity extends AppCompatActivity {
         text.setPadding(16, 16, 16, 16);
         contentLayout.addView(text);
     }
+
 }

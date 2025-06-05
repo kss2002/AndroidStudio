@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout feedNav = findViewById(R.id.feedNav);
         LinearLayout exploreNav = findViewById(R.id.exploreNav);
         LinearLayout friendNav = findViewById(R.id.friendNav);
-
+        LinearLayout notificationNav = findViewById(R.id.notificationNav);
         feedNav.setOnClickListener(v -> {
             // 내 피드일 때만 새로고침 동작 등 추가 가능
         });
@@ -142,6 +142,11 @@ public class MainActivity extends AppCompatActivity {
 
         friendNav.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, FriendActivity.class);
+            startActivity(intent);
+        });
+
+        notificationNav.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, NotificationActivity.class);
             startActivity(intent);
         });
 
@@ -158,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             });
         }
+
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -325,6 +331,14 @@ public class MainActivity extends AppCompatActivity {
             detailItemLayout.addView(detailIcon);
             detailsLayout.addView(detailItemLayout);
 
+            checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    String completedMessage = "'" + detailName + "' (" + item.getCategory() + ") ";
+                    sendCompletionNotificationToFriends(completedMessage);
+                }
+            });
+
+
             detailIcon.setOnClickListener(v -> {
                 Intent intent = new Intent(MainActivity.this, EditDetailActivity.class);
                 intent.putExtra("userId", targetUserId);
@@ -390,4 +404,56 @@ public class MainActivity extends AppCompatActivity {
             this.detail = detail;
         }
     }
+    private void sendCompletionNotificationToFriends(String completedDetail) {
+        String currentUserId = mAuth.getCurrentUser().getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference()
+                .child("UserAccount").child(currentUserId).child("name");
+
+        // userName을 담을 수 있는 final 배열 사용
+        final String[] userName = new String[1];
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot nameSnapshot) {
+                userName[0] = nameSnapshot.getValue(String.class);
+                if (userName[0] == null) userName[0] = "알 수 없는 사용자";
+
+                // 친구 목록 불러오기
+                DatabaseReference friendsRef = FirebaseDatabase.getInstance().getReference()
+                        .child("friends").child(currentUserId);
+
+                friendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot friendSnapshot : snapshot.getChildren()) {
+                            String friendId = friendSnapshot.getKey();
+
+                            // 친구에게 알림 전송
+                            DatabaseReference notiRef = FirebaseDatabase.getInstance().getReference()
+                                    .child("notifications").child(friendId).push();
+
+                            String message = userName[0] + "님이 '" + completedDetail + "' 일정을 완료했어요!";
+                            Map<String, Object> notiData = new HashMap<>();
+                            notiData.put("fromUserId", currentUserId);
+                            notiData.put("message", message);
+                            notiData.put("timestamp", System.currentTimeMillis());
+                            notiData.put("read", false);
+
+                            notiRef.setValue(notiData);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+
+
+
 }
